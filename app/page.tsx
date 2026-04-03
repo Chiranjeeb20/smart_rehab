@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import HowItWorksCarousel from "./components/HowItWorksCarousel";
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-on-surface overflow-x-hidden selection:bg-primary/30">
@@ -59,13 +59,6 @@ export default function LandingPage() {
             >
               Get Started Now
               <span className="material-symbols-outlined text-xl">arrow_forward</span>
-            </Link>
-            <Link 
-              href="/login" 
-              className="glass-panel text-on-surface px-8 py-4 rounded-full font-bold text-lg hover:bg-white/5 transition-all flex items-center justify-center gap-2"
-            >
-              Doctor Portal
-              <span className="material-symbols-outlined text-xl">medical_services</span>
             </Link>
           </div>
         </section>
@@ -154,21 +147,82 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="lg:w-1/2 w-full">
-              {/* Mockup visual */}
-              <div className="glass-panel p-2 rounded-3xl border border-white/10 shadow-2xl relative group">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl duration-500"></div>
-                <div className="bg-surface-container-highest rounded-2xl aspect-video overflow-hidden relative flex items-center justify-center">
-                   <span className="material-symbols-outlined text-8xl text-white/5">photo_camera_front</span>
-                   <div className="absolute inset-x-8 bottom-8 h-32 bg-gradient-to-t from-background to-transparent z-10 flex items-end">
-                      <div className="glass-panel p-4 rounded-xl flex items-center gap-4 w-full mx-4 mb-4 border-l-4 border-l-primary">
-                        <span className="material-symbols-outlined text-primary">task_alt</span>
-                        <div>
-                          <p className="text-sm font-bold">Perfect Form</p>
-                          <p className="text-xs text-on-surface-variant">Hold for 3 seconds...</p>
-                        </div>
-                      </div>
-                   </div>
+            <HowItWorksCarousel />
+          </div>
+        </section>
+
+        {/* Benefits Section */}
+        <section id="benefits" className="px-6 md:px-12 py-24 bg-surface-container-lowest/30 border-t border-white/5 relative">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold mb-4">Why Choose Smart Rehab?</h2>
+              <p className="text-on-surface-variant max-w-2xl mx-auto text-lg">Experience the future of physical therapy with our distinct core benefits.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+              {/* Benefit 1 */}
+              <div className="glass-panel p-8 rounded-2xl hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 group flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/20 shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-primary text-2xl">sports_gymnastics</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Real-time AI posture correction</h3>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">Instant form feedback ensures precision for every movement, exactly like having a therapist next to you.</p>
+                </div>
+              </div>
+
+              {/* Benefit 2 */}
+              <div className="glass-panel p-8 rounded-2xl hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 group flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-tertiary/20 shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-tertiary text-2xl">note_alt</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Personalized therapy plans</h3>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">Exercises custom-tailored to your exact injury and progressive capabilities.</p>
+                </div>
+              </div>
+
+              {/* Benefit 3 */}
+              <div className="glass-panel p-8 rounded-2xl hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 group flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-secondary/20 shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-secondary text-2xl">stethoscope</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Remote doctor monitoring</h3>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">Submit your daily sessions directly to your clinician for remote review without scheduling a clinic visit.</p>
+                </div>
+              </div>
+
+              {/* Benefit 4 */}
+              <div className="glass-panel p-8 rounded-2xl hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 group flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-error/20 shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-error text-2xl">query_stats</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Faster recovery tracking</h3>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">Visualize your consistency and functional range-of-motion improvements with robust analytics.</p>
+                </div>
+              </div>
+
+              {/* Benefit 5 */}
+              <div className="glass-panel p-8 rounded-2xl hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 group flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary-container shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-on-primary-container text-2xl">home</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Convenience of home</h3>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">Completely skip the commute and waiting room. Do your therapy on your own schedule directly from home.</p>
+                </div>
+              </div>
+
+              {/* Benefit 6 */}
+              <div className="glass-panel p-8 rounded-2xl hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 group flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-surface-bright border border-white/10 shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-on-surface text-2xl">health_and_safety</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Reduced injury risk</h3>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">By enforcing joint limits mathematically, the AI prevents you from over-extending and re-injuring yourself.</p>
                 </div>
               </div>
             </div>
