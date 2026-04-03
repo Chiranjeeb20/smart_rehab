@@ -9,7 +9,8 @@ const slides = [
     title: "Therapy Plan Received",
     subtitle: "New routine unlocked",
     colorClass: "text-primary",
-    borderClass: "border-l-primary"
+    borderClass: "border-l-primary",
+    image: "/images/slides/slide1.png"
   },
   {
     id: 2,
@@ -17,7 +18,8 @@ const slides = [
     title: "Perfect Form",
     subtitle: "Hold for 3 seconds...",
     colorClass: "text-tertiary",
-    borderClass: "border-l-tertiary"
+    borderClass: "border-l-tertiary",
+    image: "/images/slides/slide2.png"
   },
   {
     id: 3,
@@ -25,7 +27,8 @@ const slides = [
     title: "Analytics Synced",
     subtitle: "Doctor review pending",
     colorClass: "text-on-surface",
-    borderClass: "border-l-surface-bright"
+    borderClass: "border-l-surface-bright",
+    image: "/images/slides/slide3.png"
   }
 ];
 
@@ -50,20 +53,26 @@ export default function HowItWorksCarousel() {
           {slides.map((slide, index) => (
             <div 
               key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-1000 flex flex-col items-center justify-center ${index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+              className={`absolute inset-0 transition-all duration-1000 flex flex-col items-center justify-center ${index === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}
             >
-              <span className={`material-symbols-outlined text-8xl ${slide.colorClass} opacity-20`}>
+              {/* Background UI Generated Image Overlay */}
+              <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
+              
+              {/* Bottom Gradient for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent z-0"></div>
+
+              <span className={`material-symbols-outlined text-8xl ${slide.colorClass} opacity-10 relative z-10 hidden sm:block`}>
                 {slide.icon}
               </span>
               
-              <div className="absolute inset-x-8 bottom-8 h-32 bg-gradient-to-t from-background to-transparent flex items-end">
-                <div className={`glass-panel p-4 rounded-xl flex items-center gap-4 w-full mx-4 mb-4 border-l-4 ${slide.borderClass} transform transition-transform duration-700 ${index === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+              <div className="absolute inset-x-8 bottom-8 top-auto z-10 flex items-end">
+                <div className={`glass-panel p-4 rounded-xl flex items-center gap-4 w-full mb-4 border-l-4 ${slide.borderClass} transform transition-all duration-700 backdrop-blur-2xl bg-slate-950/40 ${index === currentSlide ? 'translate-y-0 opacity-100 delay-300' : 'translate-y-4 opacity-0'}`}>
                   <span className={`material-symbols-outlined ${slide.colorClass}`}>
                     {index === 1 ? 'task_alt' : (index === 0 ? 'download' : 'cloud_sync')}
                   </span>
                   <div>
-                    <p className="text-sm font-bold">{slide.title}</p>
-                    <p className="text-xs text-on-surface-variant">{slide.subtitle}</p>
+                    <p className="text-sm font-bold text-white">{slide.title}</p>
+                    <p className="text-xs text-white/70">{slide.subtitle}</p>
                   </div>
                 </div>
               </div>

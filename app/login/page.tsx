@@ -21,10 +21,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-6">
       {/* Background ambient light effects */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-tertiary/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-colors duration-700 ${role === "doctor" ? "bg-red-500/20" : "bg-primary/20"}`}></div>
+      <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-colors duration-700 ${role === "doctor" ? "bg-rose-500/20" : "bg-tertiary/20"}`}></div>
 
-      <div className="glass-elevated w-full max-w-md p-8 rounded-3xl relative z-10 shadow-[0_0_50px_rgba(125,211,252,0.1)]">
+      <div className={`glass-elevated w-full max-w-md p-8 rounded-3xl relative z-10 transition-shadow duration-700 ${role === 'doctor' ? 'shadow-[0_0_50px_rgba(244,63,94,0.15)]' : 'shadow-[0_0_50px_rgba(125,211,252,0.1)]'}`}>
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-on-surface tracking-tight mb-2">
             Smart Rehab
@@ -37,22 +37,26 @@ export default function LoginPage() {
         {/* Role Selection Toggle */}
         <div className="flex bg-surface-container-high rounded-full p-1 mb-8 relative">
           <div
-            className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-primary/20 rounded-full border border-primary/30 transition-all duration-300 ease-out \${
-              role === "patient" ? "left-1" : "left-[calc(50%+0.125rem)]"
+            className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-full border transition-all duration-300 ease-out ${
+              role === "patient" 
+                ? "left-1 bg-primary/20 border-primary/30" 
+                : "left-[calc(50%+0.125rem)] bg-red-500/20 border-red-500/30"
             }`}
           ></div>
           <button
+            type="button"
             onClick={() => setRole("patient")}
-            className={`flex-1 py-2 text-sm font-semibold z-10 transition-colors \${
+            className={`flex-1 py-2 text-sm font-semibold relative z-10 transition-colors cursor-pointer ${
               role === "patient" ? "text-primary" : "text-on-surface-variant"
             }`}
           >
             Patient
           </button>
           <button
+            type="button"
             onClick={() => setRole("doctor")}
-            className={`flex-1 py-2 text-sm font-semibold z-10 transition-colors \${
-              role === "doctor" ? "text-primary" : "text-on-surface-variant"
+            className={`flex-1 py-2 text-sm font-semibold relative z-10 transition-colors cursor-pointer ${
+              role === "doctor" ? "text-red-400" : "text-on-surface-variant"
             }`}
           >
             Doctor
