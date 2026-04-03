@@ -1,0 +1,69 @@
+# Smart Rehab — Technical Design Document & System Architecture
+
+## 1. System Architecture Overview
+The system follows a modern microservices-inspired monolithic architecture for scalability and ease of deployment.
+
+- **Client Layer**: 
+    - **Mobile (Kotlin/React Native)**: Handles real-time pose estimation via MediaPipe/TFLite (On-device AI for zero latency).
+    - **Web (React/Next.js)**: Dashboard for doctors using Recharts/Chart.js for analytics.
+- **API Layer (Node.js/FastAPI)**: RESTful endpoints for data persistence, authentication, and business logic.
+- **Data Layer**: 
+    - **PostgreSQL**: Relational data for Users, Exercises, and Therapy Plans.
+    - **Redis**: For real-time session caching and notifications.
+- **AI Module**: On-device Pose Estimation (MediaPipe) + Backend Analysis for long-term trend detection.
+
+---
+
+## 2. Folder Structure
+
+### Backend (`/backend`)
+- `/src`
+    - `/api`: Route handlers (auth, patients, exercises)
+    - `/models`: Database schemas (Sequelize/Prisma)
+    - `/services`: Business logic (scoring algorithms, notification triggers)
+    - `/middleware`: Auth (JWT), Logging
+- `/tests`: Unit and Integration tests
+
+### Web App (`/frontend-web`)
+- `/components`: UI Kit (Charts, Patient Cards, Sidebar)
+- `/pages`: Dashboard, Patient Profile, Plan Builder
+- `/hooks`: Custom data fetching hooks (SWR/React Query)
+- `/utils`: Formatting analytics data
+
+### Mobile App (`/mobile-app`)
+- `/src`
+    - `/screens`: CameraView, Library, Progress
+    - `/ai`: MediaPipe wrappers and pose logic
+    - `/components`: Custom large-tap buttons, Overlays
+    - `/state`: Redux/Zustand for user session
+
+---
+
+## 3. Database Schema (High-Level)
+- **Users**: `id, email, password_hash, role (patient|doctor), profile_data`
+- **Exercises**: `id, name, video_url, target_poses_json, instructions`
+- **TherapyPlans**: `id, doctor_id, patient_id, exercise_list, schedule`
+- **Sessions**: `id, patient_id, exercise_id, accuracy_score, timestamps, raw_coordinates_blob`
+
+---
+
+## 4. Development Plan
+1. **Phase 1: Foundation (Week 1-2)**: Setup Backend API, Auth, and DB Schema.
+2. **Phase 2: Mobile Core (Week 3-4)**: Integrate MediaPipe for real-time skeletal tracking.
+3. **Phase 3: Web Dashboard (Week 5-6)**: Build doctor views and analytics visualization.
+4. **Phase 4: Feedback Loop (Week 7)**: Implement the scoring algorithm and messaging.
+5. **Phase 5: Testing & Compliance (Week 8)**: Security audits and UI/UX polishing.
+
+---
+
+## 5. Sample Code: Pose Detection Integration (Conceptual)
+```javascript
+// Mobile (React Native + MediaPipe snippet)
+const onResults = (results) => {
+  const landmarks = results.poseLandmarks;
+  const accuracy = calculatePoseMatch(landmarks, targetPose);
+  if (accuracy < 0.7) {
+    showFeedback("Raise your arm higher");
+  }
+};
+```

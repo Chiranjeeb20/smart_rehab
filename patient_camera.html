@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Smart Rehab AI Camera</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#7dd3fc",
+                    "surface-container-highest": "#202c42",
+                    "on-primary": "#001f2e",
+                    "secondary-container": "#1a3a4e",
+                    "on-secondary-fixed-variant": "#2a4a5e",
+                    "on-primary-fixed-variant": "#004d73",
+                    "on-error": "#1a0000",
+                    "background": "#0a0e1a",
+                    "on-surface-variant": "#a0b4c4",
+                    "inverse-primary": "#0a4c6e",
+                    "primary-fixed": "#c8eaff",
+                    "surface-container-low": "#111828",
+                    "surface-container-high": "#1a2438",
+                    "on-error-container": "#ffb3b3",
+                    "tertiary-container": "#3d2060",
+                    "secondary": "#88b4cc",
+                    "surface-container": "#141c2e",
+                    "surface": "#0f1524",
+                    "on-secondary-fixed": "#0d1f2b",
+                    "surface-bright": "#1a2438",
+                    "surface-dim": "#0f1524",
+                    "on-surface": "#e0e8f0",
+                    "tertiary": "#c8a0f0",
+                    "on-secondary": "#001f2e",
+                    "tertiary-fixed": "#e8d0ff",
+                    "on-tertiary-fixed": "#1a002e",
+                    "on-tertiary": "#1a002e",
+                    "secondary-fixed": "#c0d8e8",
+                    "outline": "#4a6070",
+                    "on-secondary-container": "#c0d8e8",
+                    "on-tertiary-container": "#e8d0ff",
+                    "surface-variant": "#1a2438",
+                    "outline-variant": "#2a3a48",
+                    "error": "#ff6b6b",
+                    "on-tertiary-fixed-variant": "#4d2a73",
+                    "on-primary-container": "#c8eaff",
+                    "error-container": "#3d1414",
+                    "surface-container-lowest": "#0a0e1a",
+                    "inverse-surface": "#e0e8f0",
+                    "on-background": "#e0e8f0",
+                    "primary-fixed-dim": "#7dd3fc",
+                    "on-primary-fixed": "#001f2e",
+                    "surface-tint": "#7dd3fc",
+                    "primary-container": "#0e4d6e",
+                    "secondary-fixed-dim": "#88b4cc",
+                    "tertiary-fixed-dim": "#c8a0f0",
+                    "inverse-on-surface": "#0a0e1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(15, 21, 36, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(125, 211, 252, 0.15);
+        }
+        .skeletal-line {
+            stroke: #7dd3fc;
+            stroke-width: 4;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 8px rgba(125, 211, 252, 0.8));
+        }
+        .skeletal-joint {
+            fill: #c8a0f0;
+            filter: drop-shadow(0 0 6px rgba(200, 160, 240, 0.9));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-surface overflow-hidden">
+<!-- Camera Preview Fullscreen -->
+<div class="fixed inset-0 z-0 overflow-hidden">
+<img alt="Fitness enthusiast performing overhead reach exercise in a bright modern home gym environment" class="w-full h-full object-cover grayscale-[0.2]" data-alt="Young man performing a physical therapy exercise in front of a neutral wall with soft natural window lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDexvJzxWL9kdtX7PfPxroPREN6Ce5UPEaU5smmnjgXqtoZRLL-fYVd3COOgOG6P9cTK4384IvytllvmfD1cbI5Y_xAXv08nxzUMsu7b4SxfJ0xyS8p5W9m2G74ew9XpMTzP62igSJuUstjZZ6oHh4lsttfQowy1LUAYfbMMCYeCI6l7IruFtLCLEmR_Tl0wM6j1XlBb9V9vRorGJ0hNWzJhQ2Kb9fiRMOCqcAmEGBQbDnar_q9c54cXmWV7i1J8qbxc9HX6sINM8dz"/>
+<!-- Digital Skeletal Overlay (SVG) -->
+<svg class="absolute inset-0 w-full h-full z-10" preserveaspectratio="xMidYMid slice" viewbox="0 0 1000 1000">
+<!-- Simplified Stick Figure Overlay for AI Tracking Visualization -->
+<g class="opacity-90">
+<!-- Spine -->
+<line class="skeletal-line" x1="500" x2="500" y1="350" y2="550"></line>
+<!-- Shoulders -->
+<line class="skeletal-line" x1="420" x2="580" y1="370" y2="370"></line>
+<!-- Left Arm (The problematic one) -->
+<line class="skeletal-line stroke-error" style="filter: drop-shadow(0 0 8px #ff6b6b);" x1="420" x2="350" y1="370" y2="280"></line>
+<line class="skeletal-line stroke-error" style="filter: drop-shadow(0 0 8px #ff6b6b);" x1="350" x2="310" y1="280" y2="200"></line>
+<!-- Right Arm -->
+<line class="skeletal-line" x1="580" x2="650" y1="370" y2="280"></line>
+<line class="skeletal-line" x1="650" x2="690" y1="280" y2="200"></line>
+<!-- Joints -->
+<circle class="skeletal-joint" cx="500" cy="320" r="25"></circle> <!-- Head -->
+<circle class="skeletal-joint" cx="420" cy="370" r="8"></circle> <!-- L Shoulder -->
+<circle class="skeletal-joint" cx="580" cy="370" r="8"></circle> <!-- R Shoulder -->
+<circle class="skeletal-joint fill-error" cx="350" cy="280" r="8"></circle> <!-- L Elbow -->
+<circle class="skeletal-joint" cx="650" cy="280" r="8"></circle> <!-- R Elbow -->
+</g>
+<!-- Angle Indicator -->
+<path d="M 420 370 L 350 370 A 70 70 0 0 0 350 280" fill="none" stroke="#ff6b6b" stroke-dasharray="4" stroke-width="2"></path>
+<text fill="#ff6b6b" font-family="Inter" font-size="16" font-weight="bold" x="310" y="340">80° (Needs 90°)</text>
+</svg>
+<!-- Subtle scanning effect lines -->
+<div class="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none"></div>
+</div>
+<!-- UI Overlays -->
+<div class="relative z-20 h-screen flex flex-col justify-between p-6 md:p-10 pointer-events-none">
+<!-- Top Section: Status Banner -->
+<div class="w-full flex justify-center pointer-events-auto">
+<div class="glass-panel rounded-2xl px-8 py-4 flex items-center gap-4 border-l-4 border-l-error shadow-2xl max-w-lg w-full">
+<div class="bg-error/20 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs uppercase tracking-widest font-bold text-on-surface-variant">Real-time Feedback</span>
+<span class="text-lg font-semibold text-on-surface">Raise your left arm 10�� higher</span>
+</div>
+</div>
+</div>
+<!-- Middle Section: Reps and Progress -->
+<div class="w-full flex flex-col items-center gap-6">
+<!-- Rep Counter Card -->
+<div class="glass-panel rounded-3xl p-6 flex flex-col items-center gap-2 pointer-events-auto shadow-[0_0_40px_rgba(0,0,0,0.3)]">
+<span class="text-sm font-medium text-primary uppercase tracking-[0.2em]">Repetitions</span>
+<div class="flex items-baseline gap-1">
+<span class="text-7xl font-extrabold text-on-surface tracking-tighter">8</span>
+<span class="text-2xl font-semibold text-on-surface-variant">/ 12</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-48 h-2 bg-surface-container-highest rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-primary shadow-[0_0_15px_rgba(125,211,252,0.5)] rounded-full" style="width: 66.6%;"></div>
+</div>
+</div>
+<!-- Side Metrics (AI Analytics) -->
+<div class="flex gap-4 pointer-events-auto">
+<div class="glass-panel px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-sm">timer</span>
+<span class="text-xs font-semibold text-on-surface">02:14</span>
+</div>
+<div class="glass-panel px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+<span class="text-xs font-semibold text-on-surface">Form: 92%</span>
+</div>
+</div>
+</div>
+<!-- Bottom Section: Controls -->
+<div class="w-full flex justify-between items-end pointer-events-auto">
+<!-- Exit Button -->
+<button class="glass-panel h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center text-on-surface hover:bg-error/20 hover:border-error/50 transition-all duration-300 active:scale-90 group">
+<span class="material-symbols-outlined text-3xl group-hover:text-error transition-colors">close</span>
+<span class="sr-only">Exit</span>
+</button>
+<!-- Exercise Info Center -->
+<div class="hidden md:flex glass-panel px-6 py-3 rounded-2xl flex-col items-center mb-2">
+<span class="text-[10px] uppercase font-bold text-primary tracking-widest">Active Routine</span>
+<span class="text-sm font-semibold">Bilateral Shoulder Flexion</span>
+</div>
+<!-- Pause Button -->
+<button class="glass-panel h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center text-on-surface bg-primary/10 border-primary/30 hover:bg-primary/20 transition-all duration-300 active:scale-90 group shadow-lg">
+<span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1;">pause</span>
+<span class="sr-only">Pause</span>
+</button>
+</div>
+</div>
+<!-- Subtle Vignette and Grid Overlay -->
+<div class="fixed inset-0 pointer-events-none border-[12px] border-surface/20 z-30"></div>
+<div class="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,14,26,0.4)_100%)] z-10"></div>
+<!-- Calibration Corners -->
+<div class="fixed top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-primary/40 pointer-events-none z-30"></div>
+<div class="fixed top-8 right-8 w-12 h-12 border-t-2 border-r-2 border-primary/40 pointer-events-none z-30"></div>
+<div class="fixed bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-primary/40 pointer-events-none z-30"></div>
+<div class="fixed bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-primary/40 pointer-events-none z-30"></div>
+</body></html>
