@@ -1,5 +1,17 @@
+"use client";
+import { useState, useEffect } from "react";
 
 export default function Page() {
+  const [doctorName, setDoctorName] = useState("Dr. Sarah Chen");
+  const [doctorDesignation, setDoctorDesignation] = useState("Physiotherapist");
+
+  useEffect(() => {
+    const savedName = localStorage.getItem("smart_rehab_doctor_name");
+    const savedDesignation = localStorage.getItem("smart_rehab_designation");
+    if (savedName) setDoctorName(`Dr. ${savedName}`);
+    if (savedDesignation) setDoctorDesignation(savedDesignation);
+  }, []);
+
   return (
     <>
       
@@ -30,8 +42,8 @@ export default function Page() {
 <div className="px-6 mt-auto flex items-center gap-3">
 <img alt="Doctor profile picture" className="w-10 h-10 rounded-full border border-sky-300/20" data-alt="professional portrait of a medical doctor in a modern clinic setting with soft clinical lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_X1yx3tEPmtP1k7n_ERKlaYhmPy-Yo4SK3a2MFLhFW9QuABjk6Pu0vQrO_MAijlIkFeX8RE4Nq-iRSnd6muBodBWQ0WX1SaF5r2sYlYsaeRYLS-CcV4qLJ6en71TB8Jrfz0z47vUuS5xXMoLhHdDUYCvws1_cOkBJ5iYByB6PY65uQiScbG8DYH5I2aLfhwomF5DfAqNmOu9JB_KAZdEa_eozXHNZzFYRKYC1u_f5uX3RTWsWiIN8sQXVVrwQLZU0VWvHV-RoeXRD"/>
 <div>
-<p className="text-xs font-semibold text-on-surface">Dr. Sarah Chen</p>
-<p className="text-[10px] text-slate-500 uppercase tracking-wider">Physiotherapist</p>
+<p className="text-xs font-semibold text-on-surface">{doctorName}</p>
+<p className="text-[10px] text-slate-500 uppercase tracking-wider">{doctorDesignation}</p>
 </div>
 </div>
 </aside>

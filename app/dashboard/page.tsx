@@ -1,5 +1,72 @@
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getCurrentUser, logoutUser, getAllUsers } from "../lib/auth";
+import { DUMMY_EXERCISES } from "../lib/exercises";
 
 export default function Page() {
+  const [doctorName, setDoctorName] = useState("");
+  const [doctorDesignation, setDoctorDesignation] = useState("");
+  const [doctorCode, setDoctorCode] = useState("");
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [patients, setPatients] = useState<any[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const session = getCurrentUser();
+    if (!session || session.role !== "doctor") {
+      router.replace("/login");
+      return;
+    }
+    // Add "Dr." prefix if not already present
+    const displayName = session.name.startsWith("Dr.")
+      ? session.name
+      : `Dr. ${session.name}`;
+    setDoctorName(displayName);
+    setDoctorDesignation(session.designation || "Physician");
+    setDoctorCode(session.doctorCode || "");
+
+    // Fetch patients connected to this doctor
+    const allUsers = getAllUsers();
+    const myPatients = allUsers.filter(u => u.connectedDoctorCode === session.doctorCode);
+    setPatients(myPatients);
+
+    setIsLoaded(true);
+  }, [router]);
+
+  const handleLogout = () => {
+    logoutUser();
+    router.push("/login");
+  };
+
+  const handleCopyCode = async () => {
+    if (!doctorCode) return;
+    try {
+      await navigator.clipboard.writeText(doctorCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = doctorCode;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    }
+  };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
+      </div>
+    );
+  }
+
   return (
     <>
       
@@ -27,14 +94,43 @@ export default function Page() {
 <span>Settings</span>
 </a>
 </nav>
-<div className="px-6 mt-auto">
+{/* Doctor Code Card */}
+{doctorCode && (
+<div className="px-6 my-4">
+<div className="p-3 rounded-xl bg-sky-300/5 border border-sky-300/15">
+<div className="flex items-center gap-2 mb-2">
+<span className="material-symbols-outlined text-sky-300 text-sm">pin</span>
+<span className="text-[10px] font-bold text-sky-300 uppercase tracking-widest">Your Doctor Code</span>
+</div>
+<div className="flex items-center justify-between">
+<span className="font-mono text-xl font-bold text-on-surface tracking-[0.3em]">{doctorCode}</span>
+<button
+  onClick={handleCopyCode}
+  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-300/10 hover:bg-sky-300/20 text-sky-300 transition-all text-[11px] font-semibold cursor-pointer active:scale-95"
+  title="Copy code to clipboard"
+>
+  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+    {codeCopied ? "check" : "content_copy"}
+  </span>
+  {codeCopied ? "Copied!" : "Copy"}
+</button>
+</div>
+<p className="text-[10px] text-slate-500 mt-2">Share this code with patients to connect</p>
+</div>
+</div>
+)}
+<div className="px-6 mt-auto space-y-3">
 <div className="flex items-center space-x-3 p-2 rounded-lg bg-white/5">
 <img alt="Doctor profile picture" className="w-10 h-10 rounded-full object-cover" data-alt="portrait of a professional male doctor in his 40s wearing a white lab coat with soft studio lighting and blue background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDToXoGkT6VSo6Zf1pTE_ckDGoVthDOIHrCqJAGuufiIH6J3QuXUFYyNo26caBbYolXujDNfvOvUCL_bRDoXmqktEBApTXB7xV9-Mgs1neCcUEnqwVqlFJSKuSm6lJWBQQ4oscNmYAeAEy9w4pOeVVdCz5i49CSozG7PX7T9jF_zeto0sVJVn_KXcZ5RpLTVbbCmY6M_O8SkDBusZ_K5nEcf_tfsxofRH62RgGwCPff1-CZ0v-atwqE_R-IWShXHaJwrUJGjdlPJZQ3"/>
-<div className="overflow-hidden">
-<p className="text-sm font-medium truncate">Dr. Aris Thorne</p>
-<p className="text-[10px] text-slate-400">Chief of Orthopedics</p>
+<div className="overflow-hidden flex-1">
+<p className="text-sm font-medium truncate">{doctorName}</p>
+<p className="text-[10px] text-slate-400">{doctorDesignation}</p>
 </div>
 </div>
+<button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-error hover:bg-error/10 transition-all text-xs font-medium cursor-pointer">
+<span className="material-symbols-outlined text-base">logout</span>
+Sign Out
+</button>
 </div>
 </aside>
 <div className="flex-1 flex flex-col min-w-0">
@@ -79,83 +175,67 @@ export default function Page() {
 {/*  Main Grid  */}
 <div className="lg:col-span-3 space-y-6">
 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-{/*  Patient Card 1  */}
-<div className="glass-panel p-5 rounded-xl hover:shadow-[0_0_30px_rgba(125,211,252,0.1)] transition-all group">
-<div className="flex justify-between items-start mb-4">
-<img alt="Sarah Jenkins" className="w-12 h-12 rounded-full object-cover border-2 border-sky-300/20" data-alt="portrait of a middle-aged woman with friendly expression in a neutral studio setting with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwupnbaE1X9DNfnhPgrohJKTc11ZRawY9iAwAlFNTyHL5uDfDeN7Ev33abEuitH2Ru5AvAH19tj-a-HIKBoni3K4a1rQqpzD1rPMCcmjeaMAsvVvOsN9DJICdjVJHuG5hopdL0ydIjNk7NPl6I7i9kq78eH4aY0k0NmT7Gb2V0Gz0Ru7Plguuj5Y2fgc1Mr4Ko_0iy18rh5TzB9a_rgwa-z11WzH64epTAUufyMZGL4E4iXSR7XB-AK1FOIMyP4LSuA8RwnW2kzLjA"/>
-<span className="bg-sky-300/10 text-sky-300 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">ACL Tear</span>
-</div>
-<h3 className="text-lg font-bold text-on-surface">Sarah Jenkins</h3>
-<p className="text-xs text-on-surface-variant mb-6">Last Session: Oct 24, 2023</p>
-<div className="space-y-2">
-<div className="flex justify-between text-xs font-medium">
-<span className="text-on-surface-variant">Compliance</span>
-<span className="text-sky-300">92%</span>
-</div>
-<div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-<div className="bg-sky-300 h-full w-[92%] rounded-full"></div>
-</div>
-</div>
-</div>
-{/*  Patient Card 2  */}
-<div className="glass-panel p-5 rounded-xl hover:shadow-[0_0_30px_rgba(125,211,252,0.1)] transition-all group">
-<div className="flex justify-between items-start mb-4">
-<img alt="Marcus Chen" className="w-12 h-12 rounded-full object-cover border-2 border-sky-300/20" data-alt="headshot of a young athletic man with short hair looking confidently at the camera in soft daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWEv-noDOTZrH3PSdhQsBoelH6HL1VfhluFJyYIz2rWqN-Ryw2BZd7Ltw922aG2d2FHQCyZAk6Xz7ZJIYH0L7s22yAAbVVh0O0-IkfldoprZ5fAaxW-lvQXsIdF6QlziiQAlQLhqg6xuHrhHv25Obzltt5Ma_a_PY8Pbh3Z02GpIlm6krmUi_eL8sVAI_p4bKsjf0Zivl53VfcJ4ZPO21CtX64CbvD9PnRf-vVb3oYv1-3w5hJQnjteRp9EgqvduvcYndG72LsQ-Ei"/>
-<span className="bg-tertiary/10 text-tertiary text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Rotator Cuff</span>
-</div>
-<h3 className="text-lg font-bold text-on-surface">Marcus Chen</h3>
-<p className="text-xs text-on-surface-variant mb-6">Last Session: Oct 22, 2023</p>
-<div className="space-y-2">
-<div className="flex justify-between text-xs font-medium">
-<span className="text-on-surface-variant">Compliance</span>
-<span className="text-tertiary">88%</span>
-</div>
-<div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-<div className="bg-tertiary h-full w-[88%] rounded-full"></div>
-</div>
-</div>
-</div>
-{/*  Patient Card 3  */}
-<div className="glass-panel p-5 rounded-xl hover:shadow-[0_0_30px_rgba(125,211,252,0.1)] transition-all group border-error/20">
-<div className="flex justify-between items-start mb-4">
-<img alt="Elena Rodriguez" className="w-12 h-12 rounded-full object-cover border-2 border-error/20" data-alt="portrait of a young woman with curly hair smiling gently, warm lighting and soft blue highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVd61dYoHH9Cg6n-AvjgaRtA-3Mb-GWi-nJ5GHMm3yO-GS6qdvj5pZK3SQzAzJUcTqVTy8dql5yDxwRz2xo7SMTQ3YMmIfl4CJVhTTYnKhDHGBzVSDPalr8cIAYXvqDV-0YAIqch8ZXRe95VR30drhckBZo6t-zGk1AaY-WRwVpQShhC93msOG4GKWlqhe1LI5Wdu6F7z-KVrQOeNH_Avu93H9Pc6HECfjzZmDIUrxTDcEHCmvC5n6BEgRHKgYGF-h8lHExhalmMob"/>
-<span className="bg-error/10 text-error text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Spinal Fusion</span>
-</div>
-<h3 className="text-lg font-bold text-on-surface">Elena Rodriguez</h3>
-<p className="text-xs text-on-surface-variant mb-6">Last Session: Oct 15, 2023</p>
-<div className="space-y-2">
-<div className="flex justify-between text-xs font-medium">
-<span className="text-on-surface-variant">Compliance</span>
-<span className="text-error">42%</span>
-</div>
-<div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-<div className="bg-error h-full w-[42%] rounded-full"></div>
-</div>
-</div>
-</div>
-{/*  Patient Card 4  */}
-<div className="glass-panel p-5 rounded-xl hover:shadow-[0_0_30px_rgba(125,211,252,0.1)] transition-all group">
-<div className="flex justify-between items-start mb-4">
-<img alt="David Kim" className="w-12 h-12 rounded-full object-cover border-2 border-sky-300/20" data-alt="close up professional headshot of a smiling man with glasses, professional lighting on clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCo95xDAQc2tjPhySWB7ggS3o79uEay-t4K1TPm5talfCSE6vZemFhP3wgW1cJ3NWTEg3EGSfd-yqOtQdcgExg4CPv2ZFzExlxcr9bwAFx4QvLiGBOBbez55oo7OqACNHk5FNdQu816rgX9LZ4ZXNMjxOosbxiBxSvs_FVhmb0ZnzLpzjJBrnRj5ozWB_4whyVj_ZiPlHxmH5e6ycPsPq3mfiT0r5um5CfDePBVUBM4PzCXCfzjQ2Nk3_N9lUetYWZRmoVmZo_3p6PV"/>
-<span className="bg-sky-300/10 text-sky-300 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Ankle Fracture</span>
-</div>
-<h3 className="text-lg font-bold text-on-surface">David Kim</h3>
-<p className="text-xs text-on-surface-variant mb-6">Last Session: Oct 25, 2023</p>
-<div className="space-y-2">
-<div className="flex justify-between text-xs font-medium">
-<span className="text-on-surface-variant">Compliance</span>
-<span className="text-sky-300">95%</span>
-</div>
-<div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-<div className="bg-sky-300 h-full w-[95%] rounded-full"></div>
-</div>
-</div>
-</div>
-{/*  Add New Placeholder  */}
-<button className="border-2 border-dashed border-sky-300/20 rounded-xl flex flex-col items-center justify-center p-6 text-slate-500 hover:border-sky-300/40 hover:text-sky-300 transition-all group">
-<span className="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
-<span className="text-sm font-medium">New Patient File</span>
-</button>
+  {patients.length > 0 ? (
+    patients.map((p) => (
+      <div key={p.id} className="glass-panel p-5 rounded-xl hover:shadow-[0_0_30px_rgba(125,211,252,0.1)] transition-all group border border-white/5 bg-slate-900/40">
+        <div className="flex justify-between items-start mb-4">
+          <div className="w-12 h-12 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 font-black border-2 border-sky-400/20">
+             {p.name.charAt(0).toUpperCase()}
+          </div>
+          <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
+            p.patientProfile?.severity === "severe" ? "bg-rose-500/10 text-rose-400" : "bg-sky-300/10 text-sky-300"
+          }`}>
+            {p.patientProfile?.condition || "General"}
+          </span>
+        </div>
+        <h3 className="text-base font-bold text-on-surface">{p.name}</h3>
+        <p className="text-[10px] text-on-surface-variant font-medium tracking-widest uppercase mt-0.5">AI Assigned: {p.assignedExercises?.length || 0} Exercises</p>
+        
+        <div className="mt-6 space-y-4">
+           {/* Exercise List Mini */}
+           <div className="space-y-1.5 opacity-60">
+              {p.assignedExercises?.slice(0, 2).map((exId: string) => {
+                 const ex = DUMMY_EXERCISES.find(e => e.id === exId);
+                 return ex ? (
+                    <div key={exId} className="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                       <span className="material-symbols-outlined text-xs">check_circle</span>
+                       <span className="truncate">{ex.name}</span>
+                    </div>
+                 ) : null;
+              })}
+           </div>
+
+           <div className="space-y-2 pt-2 border-t border-white/5">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                <span className="text-on-surface-variant">Avg Accuracy</span>
+                <span className="text-emerald-400">
+                   {p.performanceHistory?.length 
+                     ? Math.round(p.performanceHistory.reduce((a: any, b: any) => a + b.accuracy, 0) / p.performanceHistory.length)
+                     : 0}%
+                </span>
+              </div>
+              <div className="w-full bg-slate-950 h-1 rounded-full overflow-hidden">
+                <div 
+                  className="bg-emerald-400 h-full rounded-full transition-all duration-1000" 
+                  style={{ width: `${p.performanceHistory?.length ? Math.round(p.performanceHistory.reduce((a: any, b: any) => a + b.accuracy, 0) / p.performanceHistory.length) : 0}%` }}
+                />
+              </div>
+           </div>
+        </div>
+      </div>
+    ))
+  ) : (
+    <div className="col-span-full border-2 border-dashed border-sky-300/10 rounded-2xl py-20 flex flex-col items-center justify-center text-slate-500 italic">
+       <span className="material-symbols-outlined text-4xl mb-3 opacity-30">person_off</span>
+       <p className="text-sm">No connected patients found.</p>
+       <p className="text-[10px] mt-1 uppercase tracking-widest font-black">Share your code {doctorCode} to begin</p>
+    </div>
+  )}
+  {/*  Add New Placeholder  */}
+  <button onClick={() => setCodeCopied(true)} className="border-2 border-dashed border-sky-300/20 rounded-xl flex flex-col items-center justify-center p-6 text-slate-500 hover:border-sky-300/40 hover:text-sky-300 transition-all group cursor-pointer">
+    <span className="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+    <span className="text-sm font-medium">Add New Patient</span>
+  </button>
 </div>
 </div>
 {/*  Alerts Section  */}
