@@ -28,6 +28,9 @@ export interface User {
     accuracy: number;
     completed: boolean;
   }[];
+  gender?: "male" | "female";
+  doctorFeedback?: string;
+  lastUpdated?: string;
 }
 
 export interface Session {
@@ -41,6 +44,9 @@ export interface Session {
   patientProfile?: User["patientProfile"];
   assignedExercises?: string[];
   planType?: User["planType"];
+  gender?: User["gender"];
+  doctorFeedback?: string;
+  lastUpdated?: string;
 }
 
 export interface DoctorInfo {
@@ -133,6 +139,7 @@ function createSession(user: User): Session {
     connectedDoctorCode: user.connectedDoctorCode,
     patientProfile: user.patientProfile,
     assignedExercises: user.assignedExercises,
+    gender: user.gender,
   };
 }
 

@@ -8,9 +8,10 @@ export default function Page() {
   const [doctorName, setDoctorName] = useState("");
   const [doctorDesignation, setDoctorDesignation] = useState("");
   const [doctorCode, setDoctorCode] = useState("");
-  const [doctorEmail, setDoctorEmail] = useState("jane.doe@smartrehab.com");
+  const [doctorEmail, setDoctorEmail] = useState("");
   const [doctorPhone, setDoctorPhone] = useState("+1 (555) 012-3456");
-  const [doctorAvatar, setDoctorAvatar] = useState("https://api.dicebear.com/7.x/avataaars/svg?seed=Felix");
+  const [doctorGender, setDoctorGender] = useState<"male" | "female">("male");
+  const [doctorAvatar, setDoctorAvatar] = useState("/images/male-doctor.png");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [codeCopied, setCodeCopied] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -19,42 +20,49 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState<"patients" | "schedule" | "analytics" | "settings">("patients");
   const [hasNewPatient, setHasNewPatient] = useState(false);
   const [lastCount, setLastCount] = useState<number | null>(null);
+  const [patientFeedback, setPatientFeedback] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    const loadDashboardData = () => {
+    const loadProfileData = () => {
       const session = getCurrentUser();
       if (!session || session.role !== "doctor") {
         router.replace("/login");
         return;
       }
 
-      // Check for saved profile overrides in localStorage
       const savedProfile = localStorage.getItem(`profile_${session.id}`);
       if (savedProfile) {
-         const profile = JSON.parse(savedProfile);
-         setDoctorName(profile.name);
-         setDoctorDesignation(profile.designation);
-         setDoctorEmail(profile.email);
-         setDoctorPhone(profile.phone);
-         setDoctorAvatar(profile.avatar);
+        const profile = JSON.parse(savedProfile);
+        setDoctorName(profile.name);
+        setDoctorDesignation(profile.designation);
+        setDoctorEmail(profile.email || session.email);
+        setDoctorPhone(profile.phone);
+        setDoctorAvatar(profile.avatar || (profile.gender === "female" ? "/images/female-doctor.png" : "/images/male-doctor.png"));
+        setDoctorGender(profile.gender || "male");
       } else {
-         const displayName = session.name.startsWith("Dr.") ? session.name : `Dr. ${session.name}`;
-         setDoctorName(displayName);
-         setDoctorDesignation(session.designation || "Physician");
+        const displayName = session.name.startsWith("Dr.") ? session.name : `Dr. ${session.name}`;
+        setDoctorName(displayName);
+        setDoctorDesignation(session.designation || "Physician");
+        setDoctorEmail(session.email);
+        setDoctorGender(session.gender || "male");
+        setDoctorAvatar(session.gender === "female" ? "/images/female-doctor.png" : "/images/male-doctor.png");
       }
+    };
 
+    const loadPatientsData = () => {
+      const session = getCurrentUser();
+      if (!session) return;
+      
       const freshSession = getCurrentUser();
       const currentDoctorCode = freshSession?.doctorCode || session.doctorCode || "";
       setDoctorCode(currentDoctorCode);
       
       const allUsers = getAllUsers();
-      // Filter for patients connected to THIS doctor's unique code
       const myPatients = allUsers.filter(u => 
         u.role === "patient" && u.connectedDoctorCode === currentDoctorCode
       );
       
-      // Trigger notification if patient count increased
       setLastCount(prev => {
         if (prev !== null && myPatients.length > prev) {
           setHasNewPatient(true);
@@ -63,28 +71,59 @@ export default function Page() {
       });
       
       setPatients(myPatients);
-      setIsLoaded(true);
     };
 
-    loadDashboardData();
+    loadProfileData();
+    loadPatientsData();
+    setIsLoaded(true);
 
-    // Listen for storage changes from other tabs (e.g. when patient connects)
+    // Listen for storage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
+      // Always sync patient data
       if (e.key === "smart_rehab_users" || e.key === "smart_rehab_session") {
-        loadDashboardData();
+        loadPatientsData();
+      }
+      // Sync profile ONLY if it has changed in another tab/window
+      if (e.key?.startsWith("profile_")) {
+        loadProfileData();
       }
     };
 
     window.addEventListener("storage", handleStorageChange);
     
-    // Also poll every 3 seconds as a fallback for some browser behaviors
-    const pollInterval = setInterval(loadDashboardData, 3000);
+    // Poll for NEW patients only - this strictly avoids touching profile state
+    const pollInterval = setInterval(() => {
+      loadPatientsData();
+    }, 3000);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       clearInterval(pollInterval);
     };
   }, [router]);
+
+  // Auto-save changes for profile when fields change
+  useEffect(() => {
+    if (!isLoaded) return;
+    const session = getCurrentUser();
+    if (!session) return;
+
+    const timeout = setTimeout(() => {
+      const profile = {
+        name: doctorName,
+        designation: doctorDesignation,
+        email: doctorEmail,
+        phone: doctorPhone,
+        gender: doctorGender,
+        avatar: doctorAvatar
+      };
+      localStorage.setItem(`profile_${session.id}`, JSON.stringify(profile));
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [doctorName, doctorDesignation, doctorEmail, doctorPhone, doctorGender, doctorAvatar, isLoaded]);
 
   const handleSaveChanges = () => {
     setSaveStatus("saving");
@@ -96,7 +135,8 @@ export default function Page() {
       designation: doctorDesignation,
       email: doctorEmail,
       phone: doctorPhone,
-      avatar: doctorAvatar
+      avatar: doctorAvatar,
+      gender: doctorGender
     };
     
     localStorage.setItem(`profile_${session.id}`, JSON.stringify(profile));
@@ -105,6 +145,16 @@ export default function Page() {
        setSaveStatus("saved");
        setTimeout(() => setSaveStatus("idle"), 2000);
     }, 800);
+  };
+
+  const handleUpdateFeedback = () => {
+    if (!selectedPatient) return;
+    const allUsers = JSON.parse(localStorage.getItem("smart_rehab_users") || "[]");
+    const updatedUsers = allUsers.map((u: any) => 
+      u.id === selectedPatient.id ? { ...u, doctorFeedback: patientFeedback } : u
+    );
+    localStorage.setItem("smart_rehab_users", JSON.stringify(updatedUsers));
+    alert("Feedback sent to patient!");
   };
 
   // Helper to calculate streak
@@ -192,31 +242,7 @@ export default function Page() {
   <span>Settings</span>
 </button>
 </nav>
-{/* Doctor Code Card */}
-{doctorCode && (
-<div className="px-6 my-4">
-<div className="p-3 rounded-xl bg-sky-300/5 border border-sky-300/15">
-<div className="flex items-center gap-2 mb-2">
-<span className="material-symbols-outlined text-sky-300 text-sm">pin</span>
-<span className="text-[10px] font-bold text-sky-300 uppercase tracking-widest">Your Doctor Code</span>
-</div>
-<div className="flex items-center justify-between">
-<span className="font-mono text-xl font-bold text-on-surface tracking-[0.3em]">{doctorCode}</span>
-<button
-  onClick={handleCopyCode}
-  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-300/10 hover:bg-sky-300/20 text-sky-300 transition-all text-[11px] font-semibold cursor-pointer active:scale-95"
-  title="Copy code to clipboard"
->
-  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-    {codeCopied ? "check" : "content_copy"}
-  </span>
-  {codeCopied ? "Copied!" : "Copy"}
-</button>
-</div>
-<p className="text-[10px] text-slate-500 mt-2">Share this code with patients to connect</p>
-</div>
-</div>
-)}
+
 <div className="px-6 mt-auto space-y-3">
 <div className="flex items-center space-x-3 p-2 rounded-xl bg-white/[0.03] border border-white/5">
 <div className="w-10 h-10 rounded-full border-2 border-sky-400/20 overflow-hidden shrink-0">
@@ -322,7 +348,10 @@ Sign Out
                     </div>
                   </div>
                   <button 
-                    onClick={() => setSelectedPatient(p)}
+                    onClick={() => {
+                      setSelectedPatient(p);
+                      setPatientFeedback(p.doctorFeedback || "");
+                    }}
                     className="mt-6 w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[11px] font-black uppercase tracking-widest hover:bg-sky-300 hover:text-slate-950 transition-all active:scale-[0.98] cursor-pointer"
                   >
                     View Full Detail
@@ -594,16 +623,7 @@ Sign Out
             <h2 className="text-3xl font-black text-white tracking-tight">Clinical Settings</h2>
             <p className="text-sm text-slate-400 mt-1">Manage your specialist profile, clinic connection codes, and application preferences</p>
           </div>
-          <button 
-             onClick={handleSaveChanges}
-             className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
-                saveStatus === 'saved' ? 'bg-emerald-400 text-slate-950 shadow-emerald-400/20' : 
-                saveStatus === 'saving' ? 'bg-sky-200 text-slate-950 animate-pulse' :
-                'bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-sky-400/20'
-             }`}
-          >
-             {saveStatus === 'saved' ? 'Saved Successfully' : saveStatus === 'saving' ? 'Saving...' : 'Save All Changes'}
-          </button>
+
        </div>
 
        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -616,52 +636,8 @@ Sign Out
                    <h3 className="text-lg font-bold text-white">Profile Information</h3>
                 </div>
                 <div className="flex flex-col md:flex-row gap-10 items-start">
-                   <div className="flex flex-col items-center gap-4">
-                      <div className="relative group">
-                         <img alt="Doctor" className="w-40 h-40 rounded-3xl object-cover border-2 border-sky-400/20 shadow-2xl transition-transform duration-500 group-hover:scale-105 bg-slate-950" src={doctorAvatar}/>
-                         <div className="absolute inset-0 bg-slate-950/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <span className="material-symbols-outlined text-white text-3xl">photo_camera</span>
-                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                         <button 
-                            onClick={() => setDoctorAvatar("https://api.dicebear.com/7.x/avataaars/svg?seed=Felix")}
-                            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${doctorAvatar.includes('Felix') ? 'bg-sky-400 border-transparent text-slate-950 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
-                            title="Male Avatar"
-                         >
-                            <span className="material-symbols-outlined text-sm">man</span>
-                         </button>
-                         <button 
-                            onClick={() => setDoctorAvatar("https://api.dicebear.com/7.x/avataaars/svg?seed=Anya")}
-                            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${doctorAvatar.includes('Anya') ? 'bg-sky-400 border-transparent text-slate-950 shadow-lg' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
-                            title="Female Avatar"
-                         >
-                            <span className="material-symbols-outlined text-sm">woman</span>
-                         </button>
-                         <input 
-                           type="file" 
-                           id="avatarUpload" 
-                           className="hidden" 
-                           accept="image/*"
-                           onChange={(e) => {
-                             const file = e.target.files?.[0];
-                             if (file) {
-                               const reader = new FileReader();
-                               reader.onloadend = () => {
-                                 setDoctorAvatar(reader.result as string);
-                               };
-                               reader.readAsDataURL(file);
-                             }
-                           }}
-                         />
-                         <button 
-                            onClick={() => document.getElementById('avatarUpload')?.click()}
-                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 flex items-center justify-center hover:text-white transition-all cursor-pointer"
-                            title="Upload Custom Photo"
-                         >
-                            <span className="material-symbols-outlined text-sm">upload</span>
-                         </button>
-                      </div>
+                   <div className="w-40 h-40 rounded-3xl object-cover border-2 border-sky-400/20 shadow-2xl transition-transform duration-500 bg-slate-950 overflow-hidden shrink-0">
+                      <img alt="Doctor" className="w-full h-full object-cover" src={doctorAvatar}/>
                    </div>
                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                       <div className="space-y-2">
@@ -754,9 +730,9 @@ Sign Out
                    <div className="space-y-4">
                       <div className="flex items-center justify-between bg-white/[0.02] p-4 rounded-2xl border border-white/5">
                          <span className="text-xs font-bold text-white">Default Session Duration</span>
-                         <select className="bg-slate-900 border-none text-xs font-bold text-sky-300 focus:ring-0 cursor-pointer">
+                         <select defaultValue="45 Mins" className="bg-slate-900 border-none text-xs font-bold text-sky-300 focus:ring-0 cursor-pointer">
                             <option>30 Mins</option>
-                            <option selected>45 Mins</option>
+                            <option>45 Mins</option>
                             <option>60 Mins</option>
                          </select>
                       </div>
@@ -767,21 +743,7 @@ Sign Out
 
           {/* Right Column: Doctor Code, Data, App Prefs */}
           <div className="space-y-8">
-             {/* 4. Doctor Code Hub */}
-             <section className="glass-panel p-8 rounded-[32px] border border-sky-400/20 bg-sky-400/[0.03] space-y-6">
-                <h4 className="text-xs font-black uppercase text-sky-400 tracking-[0.3em] flex items-center gap-2">
-                   <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>pin</span>
-                   Specialist Identity
-                </h4>
-                <div className="p-6 rounded-3xl bg-slate-950 border border-sky-400/10 text-center space-y-4 shadow-inner">
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Connection Code</p>
-                   <p className="text-5xl font-black text-white tracking-[0.3em] font-mono">{doctorCode}</p>
-                   <div className="flex gap-2 pt-2">
-                      <button onClick={handleCopyCode} className="flex-1 py-3 rounded-xl bg-sky-300 text-slate-950 text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all">Copy Code</button>
-                      <button className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Regenerate</button>
-                   </div>
-                </div>
-             </section>
+
 
              {/* 5. Security & Account */}
              <section className="glass-panel p-8 rounded-[32px] border border-white/5 bg-slate-900/40 space-y-6">
@@ -956,15 +918,25 @@ Sign Out
 
                  {/* 4. Clinical Notes */}
                  <section className="space-y-4">
-                    <h3 className="text-xs font-black uppercase text-slate-500 tracking-[0.3em] flex items-center gap-2">
-                       <span className="material-symbols-outlined text-sm">edit_note</span>
-                       Specialist Clinical Notes
-                    </h3>
-                    <textarea 
-                      className="w-full bg-slate-900/50 border border-white/10 rounded-2xl p-5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-300/30 transition-all min-h-[150px]"
-                      placeholder="Add observations about range of motion, pain levels, or plan adjustments..."
-                    />
-                 </section>
+                     <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-black uppercase text-slate-500 tracking-[0.3em] flex items-center gap-2">
+                           <span className="material-symbols-outlined text-sm">edit_note</span>
+                           Specialist Clinical Notes & Feedback
+                        </h3>
+                        <button 
+                          onClick={handleUpdateFeedback}
+                          className="px-4 py-1.5 rounded-lg bg-sky-300 text-slate-950 text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all"
+                        >
+                          Send Feedback to Patient
+                        </button>
+                     </div>
+                     <textarea 
+                       value={patientFeedback}
+                       onChange={(e) => setPatientFeedback(e.target.value)}
+                       className="w-full bg-slate-900/50 border border-white/10 rounded-2xl p-5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-300/30 transition-all min-h-[150px]"
+                       placeholder="Write feedback that the patient will see on their dashboard (e.g., 'Great job on the sessions, keep your posture upright')..."
+                     />
+                  </section>
               </div>
 
               {/* Modal Footer */}

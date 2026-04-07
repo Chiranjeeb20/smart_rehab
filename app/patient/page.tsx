@@ -32,6 +32,8 @@ export default function PatientHomePage() {
   const [assignedRoutine, setAssignedRoutine] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [doctorFeedback, setDoctorFeedback] = useState("");
+
 
   // Connect dialog
   const [showConnectDialog, setShowConnectDialog] = useState(false);
@@ -56,6 +58,7 @@ export default function PatientHomePage() {
     setDoctors(getAllDoctors());
     
     setProfile(session.patientProfile);
+    setDoctorFeedback(session.doctorFeedback || "");
     if (isConn && !session.patientProfile) {
       setShowAssessment(true);
     }
@@ -307,6 +310,53 @@ export default function PatientHomePage() {
                 <span className="material-symbols-outlined text-tertiary ml-auto">arrow_forward</span>
               </button>
             </section>
+
+            {/* ===== DOCTOR FEEDBACK SECTION ===== */}
+            {connected && doctorFeedback && (
+              <section className="animate-[fadeIn_0.5s_ease-out]">
+                <div className="glass-panel p-6 rounded-[32px] border border-sky-400/20 bg-sky-400/5 relative overflow-hidden group hover:border-sky-400/40 transition-all duration-500">
+                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="material-symbols-outlined text-6xl" style={{ fontVariationSettings: "'FILL' 1" }}>clinical_notes</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-2xl bg-sky-400/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-sky-400 text-xl">medical_information</span>
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-black uppercase text-sky-400 tracking-[0.2em]">Doctor&apos;s Feedback</h3>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Clinical guidance from {connectedDoctor?.name || 'Your Doctor'}</p>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <p className="text-sm text-slate-200 leading-relaxed font-medium italic border-l-2 border-sky-400/30 pl-5 py-1">
+                      &quot;{doctorFeedback}&quot;
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Performance Snapshot */}
+            {connected && (
+              <section className="grid grid-cols-2 gap-4 animate-[fadeIn_0.6s_ease-out]">
+                <div className="glass-panel p-5 rounded-3xl border border-white/5 bg-slate-900/40">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Weekly Accuracy</p>
+                  <div className="flex items-end gap-2">
+                    <p className="text-2xl font-black text-white">82%</p>
+                    <span className="text-[10px] font-bold text-emerald-400 mb-1">↑ 4%</span>
+                  </div>
+                </div>
+                <div className="glass-panel p-5 rounded-3xl border border-white/5 bg-slate-900/40">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Program Compliance</p>
+                  <div className="flex items-end gap-2">
+                    <p className="text-2xl font-black text-white">94%</p>
+                    <span className="text-[10px] font-bold text-sky-400 mb-1">Stable</span>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Empty Tasks State */}
             <section className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center text-center">
