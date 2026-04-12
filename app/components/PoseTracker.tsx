@@ -15,6 +15,7 @@ export default function PoseTracker({ onRep, onFeedback, onAccuracy, exerciseTyp
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCalibrating, setIsCalibrating] = useState(true);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Movement State
   const prevPosition = useRef<"up" | "down">("down");
@@ -62,17 +63,25 @@ export default function PoseTracker({ onRep, onFeedback, onAccuracy, exerciseTyp
         analyzePose(results.poseLandmarks, exerciseType);
       });
 
-      if (webcamRef.current && webcamRef.current.video) {
-        camera = new Camera(webcamRef.current.video, {
-          onFrame: async () => {
-            if (webcamRef.current && webcamRef.current.video) {
-              await pose!.send({ image: webcamRef.current.video });
-            }
-          },
-          width: 640,
-          height: 480,
-        });
-        camera.start();
+      try {
+        if (webcamRef.current && webcamRef.current.video) {
+          camera = new Camera(webcamRef.current.video, {
+            onFrame: async () => {
+              if (webcamRef.current && webcamRef.current.video) {
+                await pose!.send({ image: webcamRef.current.video });
+              }
+            },
+            width: 640,
+            height: 480,
+          });
+          await camera.start();
+          setIsLoaded(true);
+        }
+      } catch (err: any) {
+        console.error("Camera Error: ", err);
+        setCameraError(
+          "Camera blocked by browser security. To test on Android, open Chrome, enter chrome://flags/#unsafely-treat-insecure-origin-as-secure, add http://192.168.1.3:3000, enable the flag, and restart Chrome."
+        );
         setIsLoaded(true);
       }
     };
@@ -95,19 +104,31 @@ export default function PoseTracker({ onRep, onFeedback, onAccuracy, exerciseTyp
   };
 
   const analyzePose = (landmarks: any[], type: string) => {
-    // MediaPipe Landmarks: 11=Lshoul, 13=Lelbow, 23=Lhip, 25=Lknee, 27=Lankle
+    if (!landmarks || landmarks.length === 0) {
+      onFeedback("No body detected", false);
+      return;
+    }
+
+    // MediaPipe Landmarks: 11=Lshoul, 13=Lelbow, 23=Lhip, 25=Lknee, 27=Lankle, 7=LEar
+    const leftEar = landmarks[7];
+    const leftShoulder = landmarks[11];
     const leftHip = landmarks[23];
     const leftKnee = landmarks[25];
     const leftAnkle = landmarks[27];
-    const leftShoulder = landmarks[11];
+
+    const isVisible = (leftShoulder?.visibility || 0) > 0.5;
+    if (!isVisible) {
+      onFeedback("Adjust your body to fit the frame", false);
+      onAccuracy(0);
+      return;
+    }
 
     let currentAngle = 0;
-    let accuracy = 0;
+    let accuracy = 100;
 
     switch (type) {
       case "flexion": 
         currentAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-        accuracy = Math.min(100, Math.max(0, (currentAngle / 120) * 100));
         
         if (currentAngle < 40 && prevPosition.current === "down") {
            prevPosition.current = "up";
@@ -115,12 +136,12 @@ export default function PoseTracker({ onRep, onFeedback, onAccuracy, exerciseTyp
            onFeedback("Great range of motion", true);
         } else if (currentAngle > 100) {
            prevPosition.current = "down";
+           onFeedback("Ready for next rep", true);
         }
         break;
 
       case "squat":
         currentAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-        accuracy = currentAngle < 90 ? 100 : (90 / currentAngle) * 100;
         
         if (currentAngle < 100 && prevPosition.current === "down") {
            prevPosition.current = "up";
@@ -128,13 +149,12 @@ export default function PoseTracker({ onRep, onFeedback, onAccuracy, exerciseTyp
            onFeedback("Good depth!", true);
         } else if (currentAngle > 160) {
            prevPosition.current = "down";
+           onFeedback("Keep your core tight", true);
         }
         break;
 
       case "leg-raise":
-        // Angle between Trunk (Shoulder-Hip) and Thigh (Hip-Knee)
         currentAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
-        accuracy = Math.min(100, (currentAngle / 45) * 100);
 
         if (currentAngle > 40 && prevPosition.current === "down") {
            prevPosition.current = "up";
@@ -146,7 +166,6 @@ export default function PoseTracker({ onRep, onFeedback, onAccuracy, exerciseTyp
         break;
       
       case "posture-hold":
-        // Angle between Shoulder, Hip and Knee (Should be close to 180 for vertical)
         currentAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
         accuracy = Math.max(0, 100 - Math.abs(180 - currentAngle) * 2);
         if (accuracy > 80) onFeedback("Excellent posture!", true);
@@ -154,28 +173,46 @@ export default function PoseTracker({ onRep, onFeedback, onAccuracy, exerciseTyp
         break;
 
       case "balance-hold":
-        // Focus on vertical stability (Shoulder to Ankle)
         currentAngle = calculateAngle(leftShoulder, leftHip, leftAnkle);
         accuracy = Math.max(0, 100 - Math.abs(180 - currentAngle) * 3);
         if (accuracy > 70) onFeedback("Stay steady...", true);
-        else onFeedback("Find your balance", false);
+        else if (accuracy < 50) onFeedback("Find your balance", false);
         break;
       
+      case "arm-raise":
+      case "neck-stretch":
       default:
-        // Default Arm Raise
-        currentAngle = calculateAngle(leftHip, leftShoulder, leftKnee); // Just placeholder
+        // Track Shoulder Rolls / Arm Raises
+        if (leftEar && leftShoulder) {
+          const verticalDist = leftShoulder.y - leftEar.y; // distance between ear and shoulder
+          
+          if (verticalDist < 0.12 && prevPosition.current === "down") {
+             prevPosition.current = "up";
+             onRep();
+             onFeedback("Good contraction!", true);
+          } else if (verticalDist > 0.16) {
+             prevPosition.current = "down";
+          }
+        }
+        break;
     }
 
     onAccuracy(Math.round(accuracy));
-    if (accuracy < 30) onFeedback("Adjust your body", false);
   };
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden bg-black flex items-center justify-center">
-      {!isLoaded && (
+      {!isLoaded && !cameraError && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-slate-900">
            <span className="material-symbols-outlined text-4xl text-sky-400 animate-spin">progress_activity</span>
            <p className="text-slate-400 text-sm font-bold uppercase">Preparing AI Tracker...</p>
+        </div>
+      )}
+
+      {cameraError && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-slate-900 p-6 text-center">
+           <span className="material-symbols-outlined text-4xl text-rose-400">videocam_off</span>
+           <p className="text-rose-400 text-sm font-bold uppercase leading-relaxed max-w-sm">{cameraError}</p>
         </div>
       )}
       

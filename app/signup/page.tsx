@@ -1,20 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
-  loginUser,
-  loginWithDoctorCode,
+  registerUser,
   getCurrentUser,
 } from "../lib/auth";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [role, setRole] = useState<"patient" | "doctor">("patient");
-  const [loginMethod, setLoginMethod] = useState<"email" | "code">("email");
-
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [doctorCode, setDoctorCode] = useState("");
+  const [designation, setDesignation] = useState("");
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -39,12 +37,6 @@ export default function LoginPage() {
   useEffect(() => {
     setError("");
     setSuccess("");
-  }, [role, loginMethod]);
-
-  // Reset login method when switching roles
-  useEffect(() => {
-    setLoginMethod("email");
-    setDoctorCode("");
   }, [role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,22 +48,25 @@ export default function LoginPage() {
     await new Promise((r) => setTimeout(r, 400));
 
     try {
-      let result;
-      if (role === "doctor" && loginMethod === "code") {
-        if (doctorCode.length !== 6) {
-          setError("Doctor Code must be exactly 6 digits.");
-          setIsLoading(false);
-          return;
-        }
-        result = loginWithDoctorCode(doctorCode, password);
-      } else {
-        if (!email || !password) {
-          setError("Please fill in all fields.");
-          setIsLoading(false);
-          return;
-        }
-        result = loginUser(email, password);
+      if (!fullName || !email || !password) {
+        setError("Please fill in all required fields.");
+        setIsLoading(false);
+        return;
       }
+      
+      if (role === "doctor" && !designation) {
+        setError("Please provide your medical designation.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        setIsLoading(false);
+        return;
+      }
+
+      const result = registerUser(fullName, email, password, role, designation);
 
       if (!result.success) {
         setError(result.error);
@@ -79,7 +74,7 @@ export default function LoginPage() {
         return;
       }
 
-      setSuccess(`Welcome back, ${result.user.name}!`);
+      setSuccess(`Account created! Welcome, ${result.user.name}!`);
       setTimeout(() => {
         window.location.href = result.user.role === "doctor" ? "/dashboard" : "/patient";
       }, 600);
@@ -111,10 +106,10 @@ export default function LoginPage() {
             </span>
           </div>
           <h1 className="text-3xl font-bold text-on-surface tracking-tight mb-2">
-            Smart Rehab
+            Create Account
           </h1>
           <p className="text-sm text-on-surface-variant">
-            Welcome back to your recovery journey
+            Start your path to recovery today
           </p>
         </div>
 
@@ -147,36 +142,6 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Doctor Login Method Toggle */}
-        {role === "doctor" && (
-          <div className="flex bg-surface-container rounded-lg p-1 mb-6 gap-1">
-            <button
-              type="button"
-              onClick={() => setLoginMethod("email")}
-              className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                loginMethod === "email"
-                  ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                  : "text-on-surface-variant hover:bg-white/5"
-              }`}
-            >
-              <span className="material-symbols-outlined text-sm">mail</span>
-              Email Login
-            </button>
-            <button
-              type="button"
-              onClick={() => setLoginMethod("code")}
-              className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                loginMethod === "code"
-                  ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                  : "text-on-surface-variant hover:bg-white/5"
-              }`}
-            >
-              <span className="material-symbols-outlined text-sm">pin</span>
-              Doctor Code
-            </button>
-          </div>
-        )}
-
         {/* Error Notification */}
         {error && (
           <div className="mb-6 flex items-start gap-3 p-4 rounded-2xl bg-red-500 border border-red-400 shadow-lg shadow-red-500/20 animate-[shake_0.3s_ease-in-out]">
@@ -200,61 +165,69 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {role === "doctor" && loginMethod === "code" ? (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">
+              Full Name
+            </label>
+            <div className="relative group">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-sm">
+                person
+              </span>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={role === "doctor" ? "Dr. Jane Doe" : "John Doe"}
+                className="w-full bg-surface/50 border border-outline-variant rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-on-surface"
+              />
+            </div>
+          </div>
+
+          {role === "doctor" && (
             <div className="space-y-1">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">
-                Doctor Code
+                Designation
               </label>
               <div className="relative group">
                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-400 transition-colors text-sm">
-                  pin
+                  badge
                 </span>
                 <input
                   type="text"
                   required
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  value={doctorCode}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    if (val.length <= 6) setDoctorCode(val);
-                  }}
-                  placeholder="Enter 6-digit code"
-                  className="w-full bg-surface/50 border border-outline-variant rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500/50 transition-all text-on-surface tracking-[0.35em] font-mono text-base"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">
-                Email Address
-              </label>
-              <div className="relative group">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-sm">
-                  mail
-                </span>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="hello@example.com"
-                  className="w-full bg-surface/50 border border-outline-variant rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-on-surface"
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                  placeholder="e.g. Physiotherapist"
+                  className="w-full bg-surface/50 border border-outline-variant rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500/50 transition-all text-on-surface"
                 />
               </div>
             </div>
           )}
 
           <div className="space-y-1">
-            <div className="flex justify-between items-center ml-1">
-              <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-                Password
-              </label>
-              <a href="#" className="text-xs text-primary hover:underline">
-                Forgot?
-              </a>
+            <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">
+              Email Address
+            </label>
+            <div className="relative group">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-sm">
+                mail
+              </span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="hello@example.com"
+                className="w-full bg-surface/50 border border-outline-variant rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-on-surface"
+              />
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">
+              Password
+            </label>
             <div className="relative group">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-sm">
                 lock
@@ -262,6 +235,7 @@ export default function LoginPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -288,20 +262,20 @@ export default function LoginPage() {
               <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
             ) : (
               <>
-                Sign In
-                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                Create Account
+                <span className="material-symbols-outlined text-sm">person_add</span>
               </>
             )}
           </button>
         </form>
 
         <div className="mt-8 text-center text-sm text-on-surface-variant">
-          Don't have an account?{" "}
+          Already have an account?{" "}
           <Link
-            href="/signup"
+            href="/login"
             className="text-primary font-bold hover:underline py-2 px-1 transition-all active:scale-95"
           >
-            Sign up
+            Log in
           </Link>
         </div>
 

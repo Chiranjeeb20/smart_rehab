@@ -54,7 +54,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto justify-center">
             <Link 
-              href="/login" 
+              href="/signup" 
               className="bg-primary text-on-primary px-8 py-4 rounded-full font-bold text-lg hover:scale-105 hover:bg-primary-fixed transition-all shadow-[0_0_30px_rgba(125,211,252,0.25)] flex items-center justify-center gap-2"
             >
               Get Started Now

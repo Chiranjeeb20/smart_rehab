@@ -65,14 +65,15 @@ const SESSION_KEY = "smart_rehab_session";
 
 export function getAllUsers(): User[] {
   if (typeof window === "undefined") return [];
-  const raw = localStorage.getItem(USERS_KEY);
   let users: User[] = [];
-  if (raw) {
-    try {
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    if (raw) {
       users = JSON.parse(raw);
-    } catch {
-      users = [];
     }
+  } catch (e) {
+    console.error("LocalStorage access failed:", e);
+    return [];
   }
 
   // Ensure sample doctors are in the database so their codes work
@@ -110,7 +111,11 @@ export function getAllUsers(): User[] {
 }
 
 function saveAllUsers(users: User[]): void {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  } catch (e) {
+    console.error("LocalStorage save failed:", e);
+  }
 }
 
 function generateId(): string {
@@ -186,7 +191,11 @@ export function registerUser(
   saveAllUsers(users);
 
   const session = createSession(newUser);
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } catch (e) {
+    console.error("LocalStorage session save failed:", e);
+  }
 
   return { success: true, user: session };
 }
@@ -232,15 +241,16 @@ export function loginWithDoctorCode(
 
 export function getCurrentUser(): Session | null {
   if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(SESSION_KEY);
-  if (!raw) return null;
   try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
     const session = JSON.parse(raw) as Session;
     const users = getAllUsers();
     // Return latest user data from storage instead of stale session only
     const user = users.find(u => u.id === session.id);
     return user || session;
-  } catch {
+  } catch (e) {
+    console.error("LocalStorage session access failed:", e);
     return null;
   }
 }

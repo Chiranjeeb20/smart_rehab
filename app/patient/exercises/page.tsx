@@ -6,6 +6,36 @@ import { DUMMY_EXERCISES, Exercise } from "../../lib/exercises";
 import BottomNav from "../../components/BottomNav";
 import PoseTracker from "../../components/PoseTracker";
 
+// Strict Video Mapping Array based on Exercise names
+const EXERCISE_VIDEOS: Record<string, string> = {
+  "Ankle Pumps": "https://www.youtube.com/embed/yA1T8a5T65E?autoplay=1&mute=1&loop=1&controls=1&playlist=yA1T8a5T65E",
+  "Heel Slides": "https://www.youtube.com/embed/8-I3Q_qjO-o?autoplay=1&mute=1&loop=1&controls=1&playlist=8-I3Q_qjO-o",
+  "Straight Leg Raises": "https://www.youtube.com/embed/1B5YrtfK_4w?autoplay=1&mute=1&loop=1&controls=1&playlist=1B5YrtfK_4w",
+  "Wall Support Squats": "https://www.youtube.com/embed/UqVKCROoOO8?autoplay=1&mute=1&loop=1&controls=1&playlist=UqVKCROoOO8",
+  "Shoulder Rolls": "https://www.youtube.com/embed/pGkS1OIfDq4?autoplay=1&mute=1&loop=1&controls=1&playlist=pGkS1OIfDq4",
+  "Gentle Neck Tilts": "https://www.youtube.com/embed/J1M4e7hGjV4?autoplay=1&mute=1&loop=1&controls=1&playlist=J1M4e7hGjV4",
+  "Posture Alignment Hold": "https://www.youtube.com/embed/wQzjtAwB-0Q?autoplay=1&mute=1&loop=1&controls=1&playlist=wQzjtAwB-0Q",
+  "Controlled Eye-Hand Tracking": "https://www.youtube.com/embed/G6jWovOqNFE?autoplay=1&mute=1&loop=1&controls=1&playlist=G6jWovOqNFE",
+  "Tandem Stance Balance": "https://www.youtube.com/embed/hO35VvH-A9A?autoplay=1&mute=1&loop=1&controls=1&playlist=hO35VvH-A9A",
+  "Controlled Movement Slow-Step": "https://www.youtube.com/embed/CbtQxyg1Yto?autoplay=1&mute=1&loop=1&controls=1&playlist=CbtQxyg1Yto",
+  "Deep Breathing Stretch": "https://www.youtube.com/embed/pPZ0Qv7R0aI?autoplay=1&mute=1&loop=1&controls=1&playlist=pPZ0Qv7R0aI"
+};
+
+// Strict Image Mapping Array for Exercise Posters (Custom Generated AI Medical Illustrations)
+const EXERCISE_IMAGES: Record<string, string> = {
+  "Ankle Pumps": "/images/rehab_ankle_pumps.png",
+  "Heel Slides": "/images/rehab_heel_slides.png",
+  "Straight Leg Raises": "/images/rehab_leg_raises.png",
+  "Wall Support Squats": "/images/rehab_wall_squat.png",
+  "Shoulder Rolls": "/images/rehab_shoulder_rolls.png",
+  "Gentle Neck Tilts": "/images/rehab_neck_tilts.png",
+  "Posture Alignment Hold": "/images/rehab_posture_hold.png",
+  "Controlled Eye-Hand Tracking": "/images/rehab_eye_hand.jpg",
+  "Tandem Stance Balance": "/images/rehab_tandem_stance.jpg",
+  "Controlled Movement Slow-Step": "/images/rehab_slow_step.jpg",
+  "Deep Breathing Stretch": "/images/rehab_deep_breathing.jpg"
+};
+
 export default function ExercisesPage() {
   const [patientName, setPatientName] = useState("");
   const [greeting, setGreeting] = useState("Good Morning");
@@ -29,6 +59,9 @@ export default function ExercisesPage() {
   const [liveAccuracy, setLiveAccuracy] = useState(0);
   const [totalAccuracy, setTotalAccuracy] = useState(0);
   const [accuracyPoints, setAccuracyPoints] = useState<number[]>([]);
+
+  // Derived video mapped from object
+  const mappedVideoUrl = selectedEx ? EXERCISE_VIDEOS[selectedEx.name] : null;
 
   const router = useRouter();
 
@@ -177,18 +210,26 @@ export default function ExercisesPage() {
           ).map((ex) => (
             <div key={ex.id} className="glass-card group flex overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 hover:bg-slate-900/60 transition-all">
               {/* Illustration Area */}
-              <div className="w-1/3 aspect-[4/5] bg-sky-500/5 flex items-center justify-center p-4">
-                 <div className="w-full h-full rounded-xl bg-sky-500/10 flex items-center justify-center border border-sky-500/20">
-                    <span className="material-symbols-outlined text-sky-400/50 text-6xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                       {ex.category === "knee" ? "straighten" : ex.category === "ankle" ? "footprint" : "accessibility"}
-                    </span>
+              <div className="w-1/3 aspect-[4/5] bg-sky-500/5 p-2 shrink-0">
+                 <div className="w-full h-full rounded-xl overflow-hidden bg-sky-500/10 border border-sky-500/20 relative flex items-center justify-center">
+                    {EXERCISE_IMAGES[ex.name] ? (
+                      <img 
+                        src={EXERCISE_IMAGES[ex.name]} 
+                        alt={ex.name} 
+                        className="w-full h-full object-cover opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-700"
+                      />
+                    ) : (
+                      <span className="material-symbols-outlined text-4xl text-sky-400/40" style={{ fontVariationSettings: "'FILL' 1" }}>
+                         {ex.category === "knee" ? "straighten" : ex.category === "ankle" ? "footprint" : "accessibility"}
+                      </span>
+                    )}
                  </div>
               </div>
 
               {/* Data Area */}
-              <div className="flex-1 p-5 flex flex-col justify-between">
+              <div className="flex-1 p-5 flex flex-col justify-between min-w-0">
                 <div>
-                   <h3 className="text-lg font-bold leading-tight">{ex.name}</h3>
+                   <h3 className="text-lg font-bold leading-tight truncate">{ex.name}</h3>
                    <p className="text-[10px] font-black uppercase tracking-wider text-sky-400/80 mt-1">{ex.category} Therapy</p>
                    
                    <div className="flex items-center gap-3 mt-3 text-slate-400 text-xs">
@@ -199,11 +240,11 @@ export default function ExercisesPage() {
                 <div className="flex items-center justify-between mt-4">
                    <div className="flex items-center gap-1.5">
                       <div className={`w-1.5 h-1.5 rounded-full ${ex.status === "completed" ? "bg-emerald-400" : "bg-slate-500"}`} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{ex.status.replace("-", " ")}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 truncate">{ex.status.replace("-", " ")}</span>
                    </div>
                    <button 
                      onClick={() => handleStartExercise(ex)}
-                     className="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 active:scale-90 transition-transform cursor-pointer"
+                     className="w-10 h-10 shrink-0 rounded-xl bg-sky-500 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 active:scale-90 transition-transform cursor-pointer"
                    >
                      <span className="material-symbols-outlined">play_arrow</span>
                    </button>
@@ -236,13 +277,26 @@ export default function ExercisesPage() {
           <div className="flex-1 overflow-y-auto flex flex-col">
              {activeStep === "tutorial" && (
                 <div className="px-6 py-8 space-y-8 flex-1 pb-20">
-                   <div className="rounded-3xl overflow-hidden aspect-video bg-slate-900 border border-white/10 shadow-2xl relative">
-                      <video className="w-full h-full object-cover opacity-70" src={selectedEx.video} autoPlay loop muted playsInline />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                         <div className="text-center space-y-3 p-6 bg-slate-950/60 backdrop-blur-md rounded-2xl border border-white/10 max-w-[80%]">
-                            <p className="text-xs font-bold uppercase tracking-widest text-sky-400">Preparation</p>
-                            <p className="text-sm font-medium text-slate-200">Watch the demonstration. Ensure your full body is visible in the frame once you start.</p>
-                         </div>
+                   <div className="rounded-3xl overflow-hidden bg-slate-900 border border-white/10 shadow-2xl flex flex-col">
+                      <div className="aspect-video w-full relative bg-black flex items-center justify-center">
+                         {mappedVideoUrl ? (
+                           <iframe 
+                             className="w-full h-full"
+                             src={mappedVideoUrl}
+                             title={`${selectedEx.name} demonstration`}
+                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                             allowFullScreen
+                           />
+                         ) : (
+                           <div className="text-center text-slate-500 px-4 py-8">
+                             <span className="material-symbols-outlined text-4xl mb-2 opacity-50">videocam_off</span>
+                             <p className="text-sm font-bold uppercase tracking-widest">Demo video not available</p>
+                           </div>
+                         )}
+                      </div>
+                      <div className="p-6 bg-slate-950/40 text-center space-y-2 border-t border-white/5">
+                         <p className="text-xs font-bold uppercase tracking-widest text-sky-400">Preparation</p>
+                         <p className="text-sm font-medium text-slate-200">Watch the demonstration carefully. Ensure your full body is clearly visible in the camera frame once you start.</p>
                       </div>
                    </div>
 
@@ -288,8 +342,19 @@ export default function ExercisesPage() {
                       </div>
 
                       {/* Video Ref In-Picture */}
-                      <div className="absolute bottom-6 right-6 w-24 aspect-video rounded-xl overflow-hidden border border-white/20 shadow-xl opacity-80 bg-slate-900">
-                        <video className="w-full h-full object-cover" src={selectedEx.video} autoPlay loop muted playsInline />
+                      <div className="absolute bottom-6 right-6 w-28 aspect-video rounded-xl overflow-hidden border border-white/20 shadow-xl opacity-80 bg-slate-900 flex items-center justify-center pointer-events-none">
+                         {mappedVideoUrl ? (
+                           <div className="w-[150%] h-[150%] flex items-center justify-center">
+                             <iframe 
+                               className="w-full h-full"
+                               src={`${mappedVideoUrl}&controls=0`}
+                               title="Ref"
+                               allow="autoplay; encrypted-media"
+                             />
+                           </div>
+                         ) : (
+                           <span className="material-symbols-outlined text-slate-500 opacity-50">videocam_off</span>
+                         )}
                       </div>
                    </div>
 
